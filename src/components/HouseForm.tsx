@@ -1,5 +1,5 @@
 import instance from '@/instance/api';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api'
 
 interface HouseFormData {
@@ -25,6 +25,7 @@ export default function HouseForm() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const mapRef = useRef<HTMLDivElement>(null);
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
@@ -102,8 +103,14 @@ export default function HouseForm() {
     const result = await instance.post('/geocode', {address: payload.address });
     setLocation({ lat: result.data.latitude, lng: result.data.longitude });
     console.log('Resposta do backend:', result.data);
+    setSuccess(true);
+    
+    setTimeout(() => {
+      mapRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 300);
     } catch (error) {
         console.error('Erro ao enviar dados para o backend:', error);
+        setError('Erro ao processar seu endereço. Tente novamente.');
     }
 
   };
@@ -289,7 +296,7 @@ export default function HouseForm() {
           </button>
         </form>
       </div>
-      <div className="w-full mt-10">
+      <div className="w-full mt-10" id="mapa" ref={mapRef}>
         {isLoaded ? (
           <GoogleMap
             mapContainerStyle={{ width: '100%', height: '400px' }}
