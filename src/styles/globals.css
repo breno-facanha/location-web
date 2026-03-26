@@ -35,3 +35,10 @@ textarea:focus,
 button:focus {
   transform: translateY(-2px);
 }
+
+.marker-label {
+  margin-top: -30px;
+  color: purple !important;
+  font-size: 14px;
+  font-weight: bold;
+}

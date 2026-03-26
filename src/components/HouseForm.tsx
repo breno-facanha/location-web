@@ -1,5 +1,6 @@
 import instance from '@/instance/api';
 import { useState } from 'react';
+import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api'
 
 interface HouseFormData {
   cep: string;
@@ -23,6 +24,11 @@ export default function HouseForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
+  });
 
   const fetchAddressByCep = async (cep: string) => {
     if (cep.length !== 8) return;
@@ -93,28 +99,13 @@ export default function HouseForm() {
     };
     try {
 
-    const location = await instance.post('/geocode', {address: payload.address });
-    console.log('Resposta do backend:', location.data);
+    const result = await instance.post('/geocode', {address: payload.address });
+    setLocation({ lat: result.data.latitude, lng: result.data.longitude });
+    console.log('Resposta do backend:', result.data);
     } catch (error) {
         console.error('Erro ao enviar dados para o backend:', error);
     }
 
-    console.log('Dados do formulário:', payload);
-
-    console.log('Payload para backend:', payload);
-    setSuccess(true);
-
-    setTimeout(() => {
-      setFormData({
-        cep: '',
-        endereco: '',
-        cidade: '',
-        estado: '',
-        numero: '',
-        complemento: '',
-      });
-      setSuccess(false);
-    }, 3000);
   };
 
   return (
@@ -297,6 +288,29 @@ export default function HouseForm() {
             )}
           </button>
         </form>
+      </div>
+      <div className="w-full mt-10">
+        {isLoaded ? (
+          <GoogleMap
+            mapContainerStyle={{ width: '100%', height: '400px' }}
+            center={location || { lat: -5.200, lng: -39.3000 }}
+            zoom={location ? 15 : 6}
+          >
+            {location && (
+                <Marker 
+                    position={{ lat: location?.lat, lng: location?.lng }} 
+                    options={{
+                        label: { 
+                            text: 'consegui',
+                            className: 'marker-label'
+                        },
+                    }}
+                />
+            )}
+          </GoogleMap>
+        ) : (
+          <></>
+        )}
       </div>
     </div>
   );
